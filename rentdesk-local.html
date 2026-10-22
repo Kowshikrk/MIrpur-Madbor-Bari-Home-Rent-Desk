@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RentDesk Local — বাড়ি ভাড়া রসিদ</title>
+    <style id="pageStyle">@page { size: A4; margin: 8mm; }</style>
+    <style>
+      :root {
+        --g: #176b55;
+        --g-hover: #125543;
+        --ink: #172033;
+        --muted: #687386;
+        --line: #e2e7ef;
+        --bg: #f4f6fa;
+        --red: #b42318;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Hind Siliguri", sans-serif;
+      }
+      header {
+        background: white;
+        border-bottom: 1px solid var(--line);
+        padding: 14px max(15px, calc((100% - 1200px)/2));
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .brand { font-size: 22px; font-weight: 850; }
+      .brand span { color: var(--g); }
+      .pill {
+        font-size: 11px; font-weight: 800; padding: 2px 8px;
+        border-radius: 6px; background: #eaf8f0; color: var(--g);
+        border: 1px solid #cbe7dd; vertical-align: middle;
+      }
+      small, .muted { color: var(--muted); }
+      main { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+      .tabs, .actions, .tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+      .tabs button, button {
+        border: 0; border-radius: 10px; padding: 10px 13px;
+        font: inherit; font-weight: 700; cursor: pointer;
+      }
+      .tabs button { background: white; border: 1px solid var(--line); }
+      .tabs .active, .primary { background: var(--g); color: white; }
+      .tabs .active { border-color: var(--g); }
+      .secondary { background: #edf1f6; color: var(--ink); }
+      .danger { background: #fff0ef; color: var(--red); }
+      .wa { background: #eaf8f0; color: #17623b; border: 1px solid #cbe7dd; }
+      button:disabled { opacity: .6; cursor: not-allowed; }
+      .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+      .panel {
+        background: white; border: 1px solid var(--line);
+        border-radius: 16px; padding: 18px; min-width: 0;
+      }
+      .panel h2 { font-size: 18px; margin: 0 0 4px; }
+      .panel .sub { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+      .section {
+        font-size: 11px; font-weight: 800; letter-spacing: .06em;
+        text-transform: uppercase; color: var(--g);
+        margin: 20px 0 9px; padding-top: 12px; border-top: 1px solid var(--line);
+      }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+      .field { min-width: 0; }
+      .field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+      input, select {
+        width: 100%; min-height: 40px; border: 1px solid #cfd6e1;
+        border-radius: 9px; padding: 8px; font: inherit; background: white;
+      }
+      input:focus, select:focus { outline: 2px solid #a7d8c9; border-color: var(--g); }
+      input[readonly] { background: #f6f8fb; font-family: ui-monospace, monospace; font-weight: 700; }
+      input[type=number] { font-weight: 600; }
+      #prevDue { background: #fff7f6; border-color: #f3cdc8; color: var(--red); }
+      #advAdj { background: #f4fbf7; border-color: #cbe7dd; color: #17623b; }
+      #paidToday { background: #eefaf3; border-color: #8fd3b3; color: #0f5132; font-weight: 800; }
+      .totalbox {
+        background: #f0f8f5; border: 1px solid #cbe7dd;
+        border-radius: 12px; padding: 13px; margin-top: 12px;
+      }
+      .totalrow { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; align-items: center; }
+      .totalrow + .totalrow { border-top: 1px solid #dcece6; }
+      .due { color: var(--red); font-weight: 800; }
+      .ok { color: #17623b; font-weight: 800; }
+      .badge { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+      .b-paid { background: #d8f5e3; color: #116339; }
+      .b-part { background: #fff2d8; color: #8a4b06; }
+      .b-unpaid { background: #ffe4e1; color: #9b1c13; }
+      .hidden { display: none !important; }
+      .notice {
+        background: #eef6ff; color: #164a7b; padding: 10px 12px;
+        border-radius: 10px; font-size: 13px; margin: 10px 0;
+        display: flex; gap: 8px; align-items: flex-start;
+      }
+      .notice.success { background: #eaf8f0; color: #17623b; }
+      .notice.error { background: #fff0ef; color: #9b1c13; }
+      .notice.info { background: #eef6ff; color: #164a7b; }
+      .notice.warn { background: #fff9e8; color: #8a4b06; }
+      .notice button { background: none; padding: 0 4px; font-weight: 900; color: inherit; }
+      /* Receipt */
+      .receipt { border: 1px dashed #aeb7c5; padding: 18px; background: white; border-radius: 6px; }
+      .rhead { text-align: center; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 10px; }
+      .rhead h2 { margin: 0; font-size: 19px; }
+      .rhead h3 { margin: 2px 0 6px; font-size: 12px; letter-spacing: .18em; color: #444; }
+      .rhead p { font-size: 12px; margin: 3px; }
+      .rline {
+        display: flex; justify-content: space-between; gap: 10px; padding: 5px 0;
+        border-bottom: 1px solid #edf0f4; font-size: 12px;
+      }
+      .rline span:last-child { text-align: right; font-weight: 650; overflow-wrap: anywhere; }
+      .rsection { font-weight: 800; font-size: 11px; letter-spacing: .08em; margin-top: 12px; text-transform: uppercase; }
+      .rtotal { border-top: 2px solid var(--ink); margin-top: 6px; padding-top: 8px; font-weight: 850; font-size: 13px; }
+      .words { font-size: 12px; margin-top: 12px; background: #f7f9fb; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+      .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: center; margin-top: 34px; font-size: 10px; }
+      .sign div { border-top: 1px solid #777; padding-top: 5px; }
+      .foot { text-align: center; font-size: 10px; margin-top: 12px; color: var(--muted); }
+      /* Stats */
+      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; margin-bottom: 15px; }
+      .stat { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+      .stat small { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; display: block; }
+      .stat strong { display: block; font-size: 22px; margin-top: 5px; }
+      .stat span { font-size: 11px; color: var(--muted); }
+      .tablewrap { overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+      table { width: 100%; border-collapse: collapse; min-width: 700px; }
+      th, td { font-size: 12px; text-align: left; padding: 10px; border-bottom: 1px solid var(--line); }
+      th { background: #f6f8fb; font-weight: 800; }
+      tbody tr:hover { background: #fafbfe; }
+      .inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      .inline input, .inline select { width: auto; }
+      .cardgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      .tcard { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #fcfdfe; }
+      .tcard:hover { background: white; border-color: var(--g); }
+      .tcard .flat { font-weight: 850; background: white; border: 1px solid var(--line); padding: 2px 8px; border-radius: 7px; }
+      .tcard .nm { font-weight: 700; font-size: 13px; margin: 9px 0 3px; }
+      .tcard .mt { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+      .toolbar { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: flex-end; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 14px; }
+      footer {
+        text-align: center; font-size: 11px; color: var(--muted);
+        padding: 16px; border-top: 1px solid var(--line); background: white; margin-top: 20px;
+      }
+      .dl { background: #172033; color: white; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .stats { grid-template-columns: 1fr 1fr; }
+        .cardgrid { grid-template-columns: 1fr 1fr; }
+      }
+      @media (max-width: 560px) {
+        .grid, .grid4, .stats, .cardgrid { grid-template-columns: 1fr 1fr; }
+        .grid4 { grid-template-columns: 1fr 1fr; }
+        .panel { padding: 13px; }
+        .receipt { padding: 12px; }
+      }
+      /* ===== POS / THERMAL ===== */
+      .poshelper { display:none; gap:7px; flex-wrap:wrap; align-items:center; background:#f0f8f5;
+        border:1px solid #cbe7dd; border-radius:10px; padding:9px 11px; margin-bottom:12px; }
+      .poshelper.show { display:flex; }
+      .poshelper .grp { display:flex; align-items:center; gap:5px; }
+      .poshelper label { font-size:11px; font-weight:800; color:var(--muted); white-space:nowrap; }
+      .poshelper select { min-height:28px; padding:3px 6px; font-size:11px; width:auto; border-radius:7px; }
+      .poshelper .chk { display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; cursor:pointer; }
+      .poshelper .chk input { width:auto; min-height:0; margin:0; }
+      .poshelper .postip { width:100%; font-size:10.5px; color:var(--muted); line-height:1.5;
+        border-top:1px dashed #cbe7dd; padding-top:7px; margin-top:2px; }
+      #posStage { display:flex; justify-content:center; align-items:flex-start; padding:14px 8px;
+        background:#e6eaf1; border:1px dashed #b9c2d0; border-radius:10px; max-height:70vh; overflow:auto; }
+      .pospaper { background:white; box-shadow:0 3px 14px rgba(0,0,0,.18); padding:4mm 3mm;
+        color:#000; flex:0 0 auto; font-family:"Hind Siliguri","Segoe UI",system-ui,sans-serif; }
+      .pospaper.w58 { width:58mm; font-size:10.5px; line-height:1.38; }
+      .pospaper.w80 { width:80mm; font-size:12px; line-height:1.4; }
+      .pospaper.fs-s { font-size:.88em; }
+      .pospaper.fs-l { font-size:1.16em; }
+      .pospaper.mono { font-family:ui-monospace,"SF Mono","Courier New",monospace; }
+      .pos { width:100%; }
+      .pos .ctr { text-align:center; }
+      .pos .posb { font-weight:800; }
+      .pos .plarge { font-size:1.28em; }
+      .pos .psmall { font-size:.88em; }
+      .pos .poshr { border-top:1px dashed #000; margin:3.5px 0; }
+      .pos .poshr3 { border-top:2px solid #000; margin:5px 0; }
+      .pos .prow { display:flex; justify-content:space-between; gap:6px; align-items:baseline; }
+      .pos .prow span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .pos .prow span:last-child { text-align:right; white-space:nowrap; font-weight:600; }
+      .pos .prow.pb span { font-weight:800; }
+      .pos .prow.pb span:first-child { text-transform:uppercase; }
+      .pos .cut { text-align:center; font-size:.82em; letter-spacing:.12em; font-weight:700; padding:3px 0; }
+      .pos .psign { display:flex; justify-content:space-between; gap:14px; margin-top:24px; font-size:.84em; }
+      .pos .psign div { border-top:1px solid #000; padding-top:3px; text-align:center; flex:1; }
+      .pos .copytag { text-align:center; font-weight:800; font-size:.92em; letter-spacing:.1em; padding:2px 0; }
+
+      @media print {
+        body { background: white; }
+        header, .tabs, .no-print, #formPanel, #recordsPanel, #settingsPanel, #tenantsPanel, footer,
+        .poshelper { display: none !important; }
+        main { margin: 0; padding: 0; max-width: 100%; }
+        .layout { display: block; }
+        #previewPanel { border: 0; padding: 0; background: none; }
+        body.mode-a4 .receipt { border: 0; padding: 7mm; }
+        body.mode-pos #posStage { background:none !important; border:0 !important; padding:0 !important;
+          margin:0 !important; display:block !important; max-height:none !important; overflow:visible !important; }
+        body.mode-pos .pospaper { box-shadow:none !important; padding:0 !important; width:auto !important;
+          max-height:none !important; }
+        body.mode-pos .receipt, body.mode-pos #dupBlock { display:none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <div class="brand">Rent<span>Desk</span> Local <span class="pill">OFFLINE HTML</span></div>
+        <small>বাড়ি ভাড়া ব্যবস্থাপনা · Works offline, syncs when online</small>
+      </div>
+      <div class="inline">
+        <small id="storageInfo">Connecting…</small>
+        <button class="secondary" id="syncBtn">↻ Sync</button>
+        <button class="secondary" id="exportBtn">Export backup</button>
+        <button class="secondary" id="importBtn">Import backup</button>
+        <input id="importFile" type="file" accept=".json,application/json" class="hidden" />
+      </div>
+    </header>
+
+    <main>
+      <div class="tabs no-print">
+        <button class="active" data-tab="newPanel">New receipt</button>
+        <button data-tab="recordsPanel">Receipts &amp; dues</button>
+        <button data-tab="tenantsPanel">Flats &amp; tenants</button>
+        <button data-tab="settingsPanel">Property settings</button>
+      </div>
+
+      <!-- ============ NEW RECEIPT ============ -->
+      <section id="newPanel">
+        <div class="layout">
+          <div class="panel" id="formPanel">
+            <h2>Tenant &amp; payment details</h2>
+            <p class="sub">ভাড়াটিয়া, খরচ ও জমার তথ্য পূরণ করুন</p>
+
+            <div id="editBanner" class="notice warn hidden"></div>
+            <div id="saveMsg" class="notice hidden"></div>
+
+            <div class="section">Tenant &amp; date info / ভাড়াটিয়ার তথ্য</div>
+            <div class="inline" id="quickWrap" style="margin-bottom:10px">
+              <small>Quick fill:</small>
+              <select id="quickTenant"><option value="">Select saved tenant…</option></select>
+            </div>
+            <div class="grid">
+              <div class="field">
+                <label>Receipt no. / রসিদ নং</label>
+                <input id="receiptNo" readonly />
+              </div>
+              <div class="field">
+                <label>Date / তারিখ</label>
+                <input id="date" type="date" />
+              </div>
+              <div class="field">
+                <label>Tenant name / ভাড়াটিয়ার নাম *</label>
+                <input id="tenantName" placeholder="e.g. Kazi Tanvir Ahmed" />
+              </div>
+              <div class="field">
+                <label>Mobile / মোবাইল</label>
+                <input id="tenantMobile" placeholder="017XXXXXXXX" />
+              </div>
+              <div class="field">
+                <label>Flat / unit / ফ্ল্যাট *</label>
+                <input id="flat" placeholder="e.g. Flat 4-A" />
+              </div>
+              <div class="field">
+                <label>Rent month / ভাড়ার মাস *</label>
+                <input id="rentMonth" type="month" />
+              </div>
+            </div>
+
+            <div class="section">Charges &amp; payments / বিল ও পরিশোধ</div>
+            <div class="grid4">
+              <div class="field">
+                <label>Monthly rent (৳)</label>
+                <input id="rent" type="number" min="0" value="14000" />
+              </div>
+              <div class="field">
+                <label>Previous due (৳)</label>
+                <input id="prevDue" type="number" min="0" value="0" />
+              </div>
+              <div class="field">
+                <label>Water bill (৳)</label>
+                <input id="water" type="number" min="0" value="600" />
+              </div>
+              <div class="field">
+                <label>Gas bill (৳)</label>
+                <input id="gas" type="number" min="0" value="1080" />
+              </div>
+              <div class="field">
+                <label>Electricity (৳)</label>
+                <input id="elec" type="number" min="0" value="1850" />
+              </div>
+              <div class="field">
+                <label>Other charge (৳)</label>
+                <input id="other" type="number" min="0" value="500" />
+              </div>
+              <div class="field">
+                <label>Advance adj. (৳)</label>
+                <input id="advAdj" type="number" min="0" value="0" />
+              </div>
+              <div class="field">
+                <label>Paid today (৳)</label>
+                <input id="paidToday" type="number" min="0" value="18030" />
+              </div>
+            </div>
+
+            <div class="totalbox">
+              <div class="totalrow">
+                <span>Total payable / মোট প্রদেয়</span>
+                <strong id="totalDisplay">৳0</strong>
+              </div>
+              <div class="totalrow">
+                <span>Remaining due / বকেয়া</span>
+                <strong id="dueDisplay" class="due">৳0</strong>
+              </div>
+              <div class="totalrow">
+                <span>Status / অবস্থা</span>
+                <strong id="statusDisplay">—</strong>
+              </div>
+            </div>
+
+            <div class="section">Payment details / পেমেন্টের মাধ্যম</div>
+            <div class="grid">
+              <div class="field">
+                <label>Method / পদ্ধতি</label>
+                <select id="payMethod">
+                  <option>Cash</option>
+                  <option>bKash</option>
+                  <option>Nagad</option>
+                  <option>Rocket</option>
+                  <option>Upay</option>
+                  <option>Bank</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Transaction ID / TrxID</label>
+                <input id="transId" placeholder="e.g. BKL9284712" />
+              </div>
+            </div>
+
+            <div class="actions" style="margin-top:16px">
+              <button id="saveBtn" class="primary">💾 Save receipt</button>
+              <button id="printBtn" class="secondary">🖨 Print / Save PDF</button>
+              <button id="waBtn" class="wa">Share on WhatsApp</button>
+              <button id="clearBtn" class="secondary">Clear form</button>
+              <button id="cancelEditBtn" class="danger hidden">Cancel edit</button>
+            </div>
+          </div>
+
+          <div class="panel" id="previewPanel">
+            <div class="inline no-print" style="justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px">
+              <div>
+                <h2>Receipt preview</h2>
+                <p class="sub">সরাসরি প্রিন্ট বা পিডিএফ সংরক্ষণ করুন</p>
+              </div>
+              <div class="inline">
+                <label class="inline a4only" style="font-size:12px;gap:5px">
+                  <input type="checkbox" id="dupCopy" style="width:auto;min-height:0" /> Office copy
+                </label>
+                <select id="printMode" title="Paper / printer type" style="width:auto;min-height:34px;font-size:12px;font-weight:700">
+                  <option value="a4">🖨 A4 page</option>
+                  <option value="pos58">🧾 POS 58mm roll</option>
+                  <option value="pos80">🧾 POS 80mm roll</option>
+                </select>
+                <button class="primary" id="printBtn2">Print / PDF</button>
+              </div>
+            </div>
+
+            <div class="poshelper no-print" id="posHelper">
+              <div class="grp">
+                <label>Font</label>
+                <select id="posFont"><option value="">Medium</option><option value="fs-s">Small</option><option value="fs-l">Large</option></select>
+              </div>
+              <div class="grp">
+                <label>Copies</label>
+                <select id="posCopies"><option value="1">1 — Tenant</option><option value="2">2 — Tenant + Office</option></select>
+              </div>
+              <label class="chk"><input type="checkbox" id="posBangla" checked /> Bangla text</label>
+              <label class="chk"><input type="checkbox" id="posCompact" /> Hide zero lines</label>
+              <label class="chk"><input type="checkbox" id="posMonospace" /> Monospace</label>
+              <div class="postip">
+                <b>Thermal / POS printing:</b> click <b>Print</b>, pick your 58mm or 80mm receipt printer,
+                set <b>Margins → None</b>, <b>Scale → 100%</b>, and disable <b>Headers &amp; footers</b>.
+                Turn <b>Bangla text</b> off if Bengali prints as boxes.
+              </div>
+            </div>
+
+            <div class="receipt" id="a4Sheet">
+              <div class="rhead">
+                <h2>বাড়ি ভাড়া রসিদ</h2>
+                <h3>RENT RECEIPT</h3>
+                <p id="rProperty"></p>
+                <p id="rLandlord"></p>
+              </div>
+
+              <div class="rline"><span>Receipt no. / রসিদ নং</span><span id="r_receiptNo"></span></div>
+              <div class="rline"><span>Date / তারিখ</span><span id="r_date"></span></div>
+              <div class="rline"><span>Received from / ভাড়াটিয়া</span><span id="r_tenant"></span></div>
+              <div class="rline"><span>Mobile / মোবাইল</span><span id="r_mobile"></span></div>
+              <div class="rline"><span>Flat / ফ্ল্যাট</span><span id="r_flat"></span></div>
+              <div class="rline"><span>Rent month / মাস</span><span id="r_month"></span></div>
+
+              <div class="rsection">Charges / খরচের বিবরণ</div>
+              <div class="rline"><span>Monthly rent / মাসিক ভাড়া</span><span id="r_rent"></span></div>
+              <div class="rline"><span>Previous due / পূর্বের বকেয়া</span><span id="r_prevDue"></span></div>
+              <div class="rline"><span>Water bill / পানির বিল</span><span id="r_water"></span></div>
+              <div class="rline"><span>Gas bill / গ্যাস বিল</span><span id="r_gas"></span></div>
+              <div class="rline"><span>Electricity / বিদ্যুৎ বিল</span><span id="r_elec"></span></div>
+              <div class="rline"><span>Other charge / অন্যান্য</span><span id="r_other"></span></div>
+              <div class="rline"><span>Advance adjusted / অগ্রিম সমন্বয়</span><span id="r_advAdj"></span></div>
+              <div class="rline rtotal"><span>TOTAL PAYABLE / মোট প্রদেয়</span><span id="r_total"></span></div>
+              <div class="rline"><span>Amount paid / পরিশোধিত</span><span id="r_paid"></span></div>
+              <div class="rline due"><span>REMAINING DUE / বকেয়া</span><span id="r_due"></span></div>
+
+              <div class="words"><b>Amount in words / কথায়:</b> <span id="r_words"></span></div>
+
+              <div class="rline"><span>Payment method / পদ্ধতি</span><span id="r_method"></span></div>
+              <div class="rline"><span>Transaction ID</span><span id="r_transId"></span></div>
+              <div class="rline"><span>Status / অবস্থা</span><span id="r_status"></span></div>
+
+              <div class="sign">
+                <div>Tenant signature / ভাড়াটিয়ার স্বাক্ষর</div>
+                <div>Collector signature / আদায়কারীর স্বাক্ষর</div>
+              </div>
+              <div class="foot">Thank you for your payment. · পেমেন্টের জন্য ধন্যবাদ। · RentDesk Local</div>
+            </div>
+
+            <div id="dupBlock" class="receipt hidden no-print" style="margin-top:16px;border-top:4px solid var(--ink)">
+              <div style="text-align:right;font-size:10px;letter-spacing:.14em;font-weight:800;color:var(--muted)">OFFICE / LANDLORD COPY</div>
+              <div class="rhead">
+                <h2 style="font-size:15px">বাড়ি ভাড়া রসিদ (অফিস কপি)</h2>
+                <p id="dupMeta"></p>
+              </div>
+              <div class="rline"><span>Tenant</span><span id="dupTenant"></span></div>
+              <div class="rline"><span>Date</span><span id="dupDate"></span></div>
+              <div class="rline"><span>Total payable</span><span id="dupTotal"></span></div>
+              <div class="rline"><span>Paid</span><span id="dupPaid"></span></div>
+              <div class="rline due"><span>Due</span><span id="dupDue"></span></div>
+              <div class="sign">
+                <div>Tenant Signature</div>
+                <div>Landlord Signature</div>
+              </div>
+            </div>
+
+            <div id="posStage" class="hidden">
+              <div class="pospaper w58" id="posPaper"><div class="pos" id="posLines"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ RECORDS ============ -->
+      <section id="recordsPanel" class="hidden">
+        <div class="stats">
+          <div class="stat">
+            <small>Collected (month)</small>
+            <strong id="statCollected" class="ok">৳0</strong>
+            <span>payments recorded</span>
+          </div>
+          <div class="stat">
+            <small>Billed (month)</small>
+            <strong id="statBilled">৳0</strong>
+            <span>rent + utilities</span>
+          </div>
+          <div class="stat">
+            <small>Outstanding due</small>
+            <strong id="statDue" class="due">৳0</strong>
+            <span>all saved receipts</span>
+          </div>
+          <div class="stat">
+            <small>Receipts (month)</small>
+            <strong id="statCount">0</strong>
+            <span>records in system</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="toolbar">
+            <div>
+              <h2>Receipts &amp; monthly dues</h2>
+              <p class="sub">রসিদ তালিকা, বকেয়া ও পেমেন্ট হিস্ট্রি</p>
+            </div>
+            <div class="inline">
+              <input id="filterMonth" type="month" />
+              <select id="filterStatus">
+                <option value="ALL">All status</option>
+                <option value="PAID">PAID</option>
+                <option value="PARTIALLY PAID">PARTIALLY PAID</option>
+                <option value="UNPAID">UNPAID</option>
+              </select>
+              <input id="filterSearch" placeholder="Search tenant / flat / receipt" style="min-width:210px" />
+              <button class="secondary" id="csvBtn">⬇ CSV</button>
+            </div>
+          </div>
+
+          <div class="notice info">
+            💡 <div>Each receipt stores its own balance. Click <b>Copy</b> to build next month&apos;s bill — the unpaid balance is carried over automatically as <i>previous due</i>.</div>
+          </div>
+
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Receipt</th>
+                  <th>Tenant / Flat</th>
+                  <th>Month</th>
+                  <th style="text-align:right">Total</th>
+                  <th style="text-align:right">Paid</th>
+                  <th style="text-align:right">Due</th>
+                  <th>Status</th>
+                  <th style="text-align:center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recordsBody"></tbody>
+            </table>
+          </div>
+          <div id="recordsEmpty" class="muted" style="padding:18px;text-align:center">No receipts saved yet.</div>
+        </div>
+      </section>
+
+      <!-- ============ TENANTS ============ -->
+      <section id="tenantsPanel" class="hidden">
+        <div class="panel">
+          <div class="toolbar">
+            <div>
+              <h2>Flats &amp; tenants directory</h2>
+              <p class="sub">ফ্ল্যাটভিত্তিক ভাড়াটিয়া ও বকেয়া সারসংক্ষেপ</p>
+            </div>
+            <div class="inline"><small>Total flats: <b id="flatCount">0</b></small></div>
+          </div>
+          <div class="cardgrid" id="tenantCards"></div>
+          <div id="tenantsEmpty" class="muted" style="padding:18px;text-align:center">No tenants yet — save a receipt first.</div>
+        </div>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section id="settingsPanel" class="hidden">
+        <div class="panel" style="max-width:720px;margin:0 auto">
+          <h2>Property settings / বাড়ির তথ্য</h2>
+          <p class="sub">এই তথ্যগুলো রসিদের শিরোনামে প্রদর্শিত হবে</p>
+          <div id="settingsMsg" class="notice hidden"></div>
+          <div class="grid">
+            <div class="field">
+              <label>Property name / বাড়ির নাম</label>
+              <input id="propertyName" value="Noor Villa" />
+            </div>
+            <div class="field">
+              <label>Address / ঠিকানা</label>
+              <input id="propertyAddress" value="House 14, Road 5, Mirpur-10, Dhaka" />
+            </div>
+            <div class="field">
+              <label>Landlord name / বাড়িওয়ালার নাম</label>
+              <input id="landlordName" value="Md. Karim Ullah" />
+            </div>
+            <div class="field">
+              <label>Landlord mobile / মোবাইল</label>
+              <input id="landlordMobile" value="01712-345678" />
+            </div>
+          </div>
+          <div class="actions" style="margin-top:16px;justify-content:flex-end">
+            <button id="saveSettingsBtn" class="primary">Save property details</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      RentDesk Local · বাড়ি ভাড়া ও রসিদ ব্যবস্থাপনা · Single-file offline HTML app
+      · <a id="dlSelf" href="rentdesk-local.html" download="rentdesk-local.html">Download this HTML file</a>
+    </footer>
+
+    <script>
+      /* ================= CONSTANTS ================= */
+      var RK = "rentdesk_local_records_v1";
+      var SK = "rentdesk_local_settings_v1";
+      var DEFAULTS = {
+        property_name: "Noor Villa",
+        property_address: "House 14, Road 5, Mirpur-10, Dhaka",
+        landlord_name: "Md. Karim Ullah",
+        landlord_mobile: "01712-345678"
+      };
+      var $ = function (id) { return document.getElementById(id); };
+      var editingId = null;
+      var records = [];
+      var settings = Object.assign({}, DEFAULTS);
+
+      /* ================= HELPERS ================= */
+      function cash(n) {
+        return "৳" + Number(n || 0).toLocaleString("en-BD", { maximumFractionDigits: 2 });
+      }
+      function today() {
+        var d = new Date();
+        return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      }
+      function monthNow() { return today().slice(0, 7); }
+      function v(id) { return $(id).value.trim(); }
+      function n(id) { return Math.max(0, Number($(id).value) || 0); }
+      function nextNo() {
+        return "BRM-" + new Date().getFullYear() + "-" + String(Date.now()).slice(-6);
+      }
+      function read(k, def) {
+        try { return JSON.parse(localStorage.getItem(k)) || def; } catch (e) { return def; }
+      }
+      function persist() {
+        try {
+          localStorage.setItem(RK, JSON.stringify(records));
+          localStorage.setItem(SK, JSON.stringify(settings));
+        } catch (e) {}
+      }
+      function stamp() {
+        return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+      function statusOf(t, p) {
+        if (p <= 0) return "UNPAID";
+        if (p < t) return "PARTIALLY PAID";
+        return "PAID";
+      }
+      function badgeClass(s) {
+        return s === "PAID" ? "b-paid" : s === "PARTIALLY PAID" ? "b-part" : "b-unpaid";
+      }
+      function note(id, text, kind) {
+        var e = $(id);
+        if (!e) return;
+        e.innerHTML = "<div style='flex:1'>" + text + "</div><button data-close>✕</button>";
+        e.className = "notice " + (kind || "info");
+        e.classList.remove("hidden");
+        e.querySelector("[data-close]").onclick = function () { e.classList.add("hidden"); };
+      }
+      function fmtDate(s) {
+        if (!s) return "—";
+        try {
+          return new Date(s + "T12:00:00").toLocaleDateString("en-GB", {
+            day: "2-digit", month: "long", year: "numeric"
+          });
+        } catch (e) { return s; }
+      }
+      var BN_MONTHS = ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"];
+      function fmtMonth(s) {
+        if (!s) return "—";
+        var p = s.split("-");
+        if (p.length !== 2) return s;
+        var en = new Date(Number(p[0]), Number(p[1]) - 1, 1)
+          .toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+        return en + " (" + (BN_MONTHS[Number(p[1]) - 1] || "") + " " + p[0] + ")";
+      }
+      function words(num) {
+        var x = Math.round(Math.abs(num));
+        if (!x) return "Zero Taka Only / শূন্য টাকা মাত্র";
+        var a = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve",
+                 "Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+        var b = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+        function u(m) {
+          if (m < 20) return a[m];
+          if (m < 100) return b[Math.floor(m / 10)] + (m % 10 ? " " + a[m % 10] : "");
+          if (m < 1000) return a[Math.floor(m / 100)] + " Hundred" + (m % 100 ? " " + u(m % 100) : "");
+          return "";
+        }
+        var out = [], t = x;
+        [["Crore", 1e7], ["Lakh", 1e5], ["Thousand", 1e3], ["", 1]].forEach(function (c) {
+          if (t >= c[1]) { var q = Math.floor(t / c[1]); t %= c[1]; out.push(u(q) + (c[0] ? " " + c[0] : "")); }
+        });
+        var bd = { "0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯" };
+        var bn = String(x).split("").map(function (d) { return bd[d] || d; }).join("");
+        return out.join(" ") + " Taka Only / " + bn + " টাকা মাত্র";
+      }
+      function total() {
+        return Math.max(0, n("rent") + n("prevDue") + n("water") + n("gas") + n("elec") + n("other") - n("advAdj"));
+      }
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+          return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+        });
+      }
+
+      /* ================= ONLINE SYNC (optional) ================= */
+      function status_(t) { $("storageInfo").textContent = t; }
+      async function api(path, o) {
+        o = o || {};
+        var r = await fetch("/api/" + path, {
+          method: o.method || "GET",
+          cache: "no-store",
+          headers: { "content-type": "application/json" },
+          body: o.body === undefined ? undefined : JSON.stringify(o.body)
+        });
+        var d = await r.json().catch(function () { return {}; });
+        if (!r.ok) throw new Error(d.error || "Request failed");
+        return d;
+      }
+      async function remote(path, method, body) {
+        try {
+          await api(path, { method: method, body: body });
+          status_("Synced online · " + stamp());
+          return true;
+        } catch (e) {
+          status_("Offline — saved on this device");
+          return false;
+        }
+      }
+      var pulling = false;
+      async function pull() {
+        if (pulling) return;
+        pulling = true;
+        try {
+          var d = await api("data");
+          var ids = {};
+          d.records.forEach(function (r) { ids[r.id] = 1; });
+          var extra = records.filter(function (r) { return r && r.id && !ids[r.id]; });
+          if (extra.length) {
+            await api("receipts", { method: "POST", body: extra });
+            d.records = d.records.concat(extra);
+          }
+          if (!d.settings && localStorage.getItem(SK)) {
+            await api("settings", { method: "PUT", body: settings });
+            d.settings = settings;
+          }
+          records = d.records.sort(function (a, b) {
+            return String(b.created_at).localeCompare(String(a.created_at));
+          });
+          if (d.settings) {
+            settings = d.settings;
+            fillSettings();
+          }
+          persist();
+          render();
+          status_("Synced online · " + stamp());
+        } catch (e) {
+          status_("Offline — local storage only");
+        } finally {
+          pulling = false;
+          $("syncBtn").disabled = false;
+        }
+      }
+
+      /* ================= FORM SYNC / PREVIEW ================= */
+      function sync() {
+        var t = total(), p = n("paidToday"), d = Math.max(0, t - p), s = statusOf(t, p);
+        $("totalDisplay").textContent = cash(t);
+        $("dueDisplay").textContent = cash(d);
+        $("dueDisplay").className = d > 0 ? "due" : "ok";
+        $("statusDisplay").innerHTML = '<span class="badge ' + badgeClass(s) + '">' + s + "</span>";
+
+        var map = [["receiptNo","r_receiptNo"],["tenantName","r_tenant"],["tenantMobile","r_mobile"],
+                   ["flat","r_flat"],["payMethod","r_method"],["transId","r_transId"]];
+        map.forEach(function (m) { $(m[1]).textContent = v(m[0]) || "—"; });
+
+        $("r_date").textContent = fmtDate(v("date"));
+        $("r_month").textContent = fmtMonth(v("rentMonth"));
+        $("r_rent").textContent = cash(n("rent"));
+        $("r_prevDue").textContent = cash(n("prevDue"));
+        $("r_water").textContent = cash(n("water"));
+        $("r_gas").textContent = cash(n("gas"));
+        $("r_elec").textContent = cash(n("elec"));
+        $("r_other").textContent = cash(n("other"));
+        $("r_advAdj").textContent = "−" + cash(n("advAdj"));
+        $("r_total").textContent = cash(t);
+        $("r_paid").textContent = cash(p);
+        $("r_due").textContent = cash(d);
+        $("r_due").className = d > 0 ? "" : "ok";
+        $("r_words").textContent = words(p);
+        $("r_status").innerHTML = '<span class="badge ' + badgeClass(s) + '">' + s + "</span>";
+        $("rProperty").textContent = "House: " + settings.property_name + " · " + settings.property_address;
+        $("rLandlord").textContent = "Landlord: " + settings.landlord_name + " · Mobile: " + settings.landlord_mobile;
+
+        /* office duplicate copy */
+        $("dupMeta").textContent = settings.property_name + " · Receipt: " + (v("receiptNo") || "—") +
+                                   " · Flat: " + (v("flat") || "—") + " · Month: " + v("rentMonth");
+        $("dupTenant").textContent = (v("tenantName") || "—") + (v("tenantMobile") ? " (" + v("tenantMobile") + ")" : "");
+        $("dupDate").textContent = fmtDate(v("date"));
+        $("dupTotal").textContent = cash(t);
+        $("dupPaid").textContent = cash(p) + " (" + v("payMethod") + ")";
+        $("dupDue").textContent = cash(d);
+        syncPos();
+      }
+
+      /* ============ POS / THERMAL RECEIPT ENGINE ============ */
+      var posMode = "a4", posFontVal = "", posCopiesVal = 1, posBanglaVal = true, posCompactVal = false;
+      function posCenter(t, c) { return '<div class="ctr ' + (c || "") + '">' + esc(t) + "</div>"; }
+      function posRow(l, val, b) {
+        return '<div class="prow' + (b ? " pb" : "") + '"><span>' + esc(l) + "</span><span>" + esc(val) + "</span></div>";
+      }
+      function posRule() { return '<div class="poshr"></div>'; }
+      function posHeavy() { return '<div class="poshr3"></div>'; }
+
+      function fmtMonthB(s, B) {
+        if (!B) {
+          var q = String(s).split("-");
+          return q.length === 2
+            ? new Date(Number(q[0]), Number(q[1]) - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+            : s;
+        }
+        return fmtMonth(s);
+      }
+      function wordsB(num, B) {
+        var full = words(num);
+        return B ? full : full.replace(/ ?\/ ?[^\/]*মাত্র$/, "");
+      }
+
+      function buildPosBlock() {
+        var B = posBanglaVal, C = posCompactVal;
+        var t = total(), p = n("paidToday"), d = Math.max(0, t - p), st = statusOf(t, p);
+        function keep(x) { return !C || Number(x) > 0; }
+        var h = "";
+        h += posCenter(String(settings.property_name || "RENT RECEIPT").toUpperCase(), "posb plarge");
+        if (settings.property_address) h += posCenter(settings.property_address, "psmall");
+        h += posCenter((B ? "বাড়িওয়ালা" : "Landlord") + ": " + settings.landlord_name +
+                       (settings.landlord_mobile ? " · " + settings.landlord_mobile : ""), "psmall");
+        h += posHeavy();
+        h += posCenter(B ? "বাড়ি ভাড়া রসিদ" : "RENT RECEIPT", "posb plarge");
+        if (B) h += posCenter("RENT / MONEY RECEIPT", "psmall");
+        h += posHeavy();
+
+        h += posRow(B ? "রসিদ নং" : "Receipt No", v("receiptNo") || "-");
+        h += posRow(B ? "তারিখ" : "Date", fmtDate(v("date")));
+        h += posRow(B ? "ভাড়াটিয়া" : "Tenant", v("tenantName") || "-");
+        if (v("tenantMobile")) h += posRow(B ? "মোবাইল" : "Mobile", v("tenantMobile"));
+        h += posRow(B ? "ফ্ল্যাট" : "Flat / Unit", v("flat") || "-");
+        h += posRow(B ? "ভাড়ার মাস" : "Rent Month", v("rentMonth") ? fmtMonthB(v("rentMonth"), B) : "-");
+        h += posRule();
+
+        h += posRow(B ? "মাসিক ভাড়া" : "Monthly Rent", cash(n("rent")));
+        if (keep(n("prevDue"))) h += posRow(B ? "পূর্বের বকেয়া" : "Previous Due", cash(n("prevDue")));
+        if (keep(n("water")))   h += posRow(B ? "পানির বিল" : "Water Bill", cash(n("water")));
+        if (keep(n("gas")))     h += posRow(B ? "গ্যাস বিল" : "Gas Bill", cash(n("gas")));
+        if (keep(n("elec")))    h += posRow(B ? "বিদ্যুৎ বিল" : "Electricity", cash(n("elec")));
+        if (keep(n("other")))   h += posRow(B ? "অন্যান্য খরচ" : "Other Charge", cash(n("other")));
+        if (keep(n("advAdj")))  h += posRow(B ? "অগ্রিম সমন্বয়" : "Advance Adj", "-" + cash(n("advAdj")));
+        h += posRule();
+
+        h += posRow(B ? "মোট প্রদেয়" : "Total Payable", cash(t), true);
+        h += posRow(B ? "পরিশোধিত" : "Amount Paid", cash(p), true);
+        h += posRow(B ? "বকেয়া" : "Due Balance", cash(d), true);
+        h += posRule();
+        h += '<div class="psmall">' + esc((B ? "কথায়" : "In words") + ": " + wordsB(p, B)) + "</div>";
+        h += posRule();
+
+        h += posRow(B ? "পদ্ধতি" : "Method", v("payMethod") || "-");
+        if (v("transId")) h += posRow(B ? "লেনদেন নং" : "TrxID", v("transId"));
+        h += posRow(B ? "অবস্থা" : "Status", st, true);
+        h += posRule();
+
+        h += '<div class="psign"><div>' + esc(B ? "ভাড়াটিয়ার স্বাক্ষর" : "Tenant Sign") +
+             "</div><div>" + esc(B ? "আদায়কারীর স্বাক্ষর" : "Collector Sign") + "</div></div>";
+        h += posRule();
+        h += posCenter(B ? "পেমেন্টের জন্য ধন্যবাদ" : "Thank you for your payment", "posb");
+        h += posCenter("RentDesk Local", "psmall");
+        return h;
+      }
+
+      function posBlockTag(tag) {
+        return (tag ? posHeavy() + '<div class="copytag">** ' + esc(tag) + " **</div>" + posHeavy() : "") + buildPosBlock();
+      }
+
+      function syncPos() {
+        if (!$("posLines")) return;
+        var B = posBanglaVal;
+        var html = posBlockTag(posCopiesVal === 2 ? (B ? "ভাড়াটিয়ার কপি" : "TENANT COPY") : "");
+        if (posCopiesVal === 2) {
+          html += posHeavy() + '<div class="cut">&#9986; - - - - - - CUT HERE - - - - - -</div>' + posHeavy() +
+                  posBlockTag(B ? "অফিস কপি" : "OFFICE COPY");
+        }
+        $("posLines").innerHTML = html;
+      }
+
+      function applyMode() {
+        var isPos = posMode === "pos58" || posMode === "pos80";
+        document.body.classList.toggle("mode-a4", !isPos);
+        document.body.classList.toggle("mode-pos", isPos);
+
+        var cls = "pospaper " + (posMode === "pos80" ? "w80" : "w58");
+        if (posFontVal) cls += " " + posFontVal;
+        if ($("posMonospace").checked) cls += " mono";
+        $("posPaper").className = cls;
+
+        $("posStage").classList.toggle("hidden", !isPos);
+        $("a4Sheet").classList.toggle("hidden", isPos);
+        $("posHelper").classList.toggle("show", isPos);
+        document.querySelectorAll(".a4only").forEach(function (e) { e.classList.toggle("hidden", isPos); });
+        $("dupBlock").classList.toggle("hidden", isPos || !$("dupCopy").checked);
+
+        $("pageStyle").textContent = isPos
+          ? "@page { size: " + (posMode === "pos80" ? "80mm" : "58mm") + " auto; margin: 1mm; }"
+          : "@page { size: A4; margin: 8mm; }";
+
+        $("printBtn2").textContent = isPos
+          ? "Print " + (posMode === "pos80" ? "80mm" : "58mm") : "Print / PDF";
+        $("printBtn").textContent = isPos
+          ? "🖨 Print POS " + (posMode === "pos80" ? "80mm" : "58mm") : "🖨 Print / Save PDF";
+
+        if (isPos) syncPos();
+      }
+
+      /* ================= SAVE ================= */
+      function buildReceipt() {
+        var t = total(), p = n("paidToday");
+        var now = new Date().toISOString();
+        var oldRec = editingId ? records.find(function (x) { return x.id === editingId; }) : null;
+        return {
+          id: oldRec ? oldRec.id : Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+          receipt_no: oldRec ? oldRec.receipt_no : v("receiptNo"),
+          date: v("date") || today(),
+          tenant_name: v("tenantName"),
+          mobile: v("tenantMobile"),
+          flat: v("flat"),
+          month: v("rentMonth"),
+          rent: n("rent"),
+          previous_due: n("prevDue"),
+          water: n("water"),
+          gas: n("gas"),
+          electricity: n("elec"),
+          other: n("other"),
+          advance: n("advAdj"),
+          total: t,
+          paid: p,
+          due: Math.max(0, t - p),
+          method: v("payMethod"),
+          transaction: v("transId"),
+          status: statusOf(t, p),
+          created_at: oldRec ? oldRec.created_at : now,
+          updated_at: now
+        };
+      }
+
+      async function save() {
+        if (!v("tenantName") || !v("flat") || !v("rentMonth")) {
+          note("saveMsg", "Tenant name, flat, and rent month are required. / নাম, ফ্ল্যাট ও মাস আবশ্যক।", "error");
+          return;
+        }
+        var r = buildReceipt();
+        if (editingId) {
+          var i = records.findIndex(function (x) { return x.id === editingId; });
+          if (i >= 0) {
+            records[i] = r;
+            persist();
+            render(); sync(); setEdit(r);
+            note("saveMsg", "Receipt <b>" + esc(r.receipt_no) + "</b> updated. You can print it now.", "success");
+            remote("receipts/" + r.id, "PUT", r);
+            return;
+          }
+          setEdit(null);
+        }
+        if (records.some(function (x) { return x.receipt_no === r.receipt_no; })) {
+          r.receipt_no = nextNo();
+          $("receiptNo").value = r.receipt_no;
+        }
+        records.unshift(r);
+        persist();
+        render();
+        note("saveMsg", "Receipt <b>" + esc(r.receipt_no) + "</b> saved. Ready to print, share, or copy next month.", "success");
+        var ok = await remote("receipts/" + r.id, "PUT", r);
+        if (!ok) pull();
+        $("receiptNo").value = nextNo();
+        sync();
+        setEdit(null);
+      }
+
+      /* ================= RENDER TABLES ================= */
+      function filtered() {
+        var m = v("filterMonth"), q = v("filterSearch").toLowerCase(), st = v("filterStatus");
+        return records.filter(function (r) {
+          var okM = !m || r.month === m;
+          var hay = [r.receipt_no, r.tenant_name, r.flat, r.mobile, r.method, r.transaction]
+            .map(function (x) { return String(x || "").toLowerCase(); });
+          var okQ = !q || hay.some(function (x) { return x.indexOf(q) >= 0; });
+          var okS = st === "ALL" || r.status === st;
+          return okM && okQ && okS;
+        });
+      }
+
+      function render() {
+        var arr = filtered();
+        $("recordsBody").innerHTML = arr.map(function (r) {
+          return "<tr>" +
+            "<td><b style='font-family:ui-monospace,monospace'>" + esc(r.receipt_no) + "</b><br><small class='muted'>" + esc(r.date) + "</small></td>" +
+            "<td><b>" + esc(r.tenant_name) + "</b><br><small class='muted'>" + esc(r.flat) + (r.mobile ? " · " + esc(r.mobile) : "") + "</small></td>" +
+            "<td>" + esc(r.month) + "</td>" +
+            "<td style='text-align:right'><b>" + cash(r.total) + "</b></td>" +
+            "<td style='text-align:right' class='ok'>" + cash(r.paid) + "<br><small class='muted'>" + esc(r.method) + "</small></td>" +
+            "<td style='text-align:right' class='" + (r.due > 0 ? "due" : "muted") + "'><b>" + cash(r.due) + "</b></td>" +
+            "<td><span class='badge " + badgeClass(r.status) + "'>" + esc(r.status) + "</span></td>" +
+            "<td style='text-align:center;white-space:nowrap'>" +
+              "<button class='primary' data-edit='" + r.id + "' title='Edit'>✎</button> " +
+              "<button class='secondary' data-load='" + r.id + "' title='Copy to new month'>⧉</button> " +
+              "<button class='wa' data-wa='" + r.id + "' title='WhatsApp'>✆</button> " +
+              "<button class='danger' data-del='" + r.id + "' title='Delete'>🗑</button>" +
+            "</td></tr>";
+        }).join("");
+        $("recordsEmpty").classList.toggle("hidden", arr.length > 0);
+
+        var m = v("filterMonth") || monthNow();
+        var sel = records.filter(function (r) { return r.month === m; });
+        $("statCollected").textContent = cash(sel.reduce(function (a, r) { return a + Number(r.paid || 0); }, 0));
+        $("statBilled").textContent = cash(sel.reduce(function (a, r) { return a + Number(r.total || 0); }, 0));
+        $("statDue").textContent = cash(records.reduce(function (a, r) { return a + Number(r.due || 0); }, 0));
+        $("statCount").textContent = sel.length;
+
+        /* tenants directory */
+        var seen = {}, cards = [];
+        records.forEach(function (r) {
+          var k = String(r.flat || "").trim().toLowerCase();
+          if (!k || seen[k]) return;
+          seen[k] = 1;
+          cards.push(r);
+        });
+        $("flatCount").textContent = cards.length;
+        $("tenantCards").innerHTML = cards.map(function (r) {
+          return "<div class='tcard'>" +
+            "<span class='flat'>" + esc(r.flat) + "</span> " +
+            "<span class='badge " + badgeClass(r.status) + "'>" + (r.due > 0 ? "Due " + cash(r.due) : "All clear") + "</span>" +
+            "<div class='nm'>" + esc(r.tenant_name) + "</div>" +
+            "<div class='mt'>Last billed: " + esc(r.month) + (r.mobile ? " · " + esc(r.mobile) : "") + "</div>" +
+            "<div class='inline'>" +
+              "<button class='primary' data-load='" + r.id + "'>Create next bill</button>" +
+              "<button class='wa' data-wa='" + r.id + "'>✆ WhatsApp</button>" +
+            "</div></div>";
+        }).join("");
+        $("tenantsEmpty").classList.toggle("hidden", cards.length > 0);
+
+        /* quick fill dropdown */
+        var seenT = {}, opts = "";
+        records.forEach(function (r) {
+          var k = String(r.tenant_name || "").trim().toLowerCase();
+          if (!k || seenT[k]) return;
+          seenT[k] = 1;
+          opts += "<option value=\"" + esc(r.id) + "\">" + esc(r.tenant_name) + " (" + esc(r.flat) + ")</option>";
+        });
+        $("quickTenant").innerHTML = "<option value=\"\">Select saved tenant…</option>" + opts;
+        $("quickWrap").classList.toggle("hidden", records.length === 0);
+      }
+
+      /* ================= EDIT / COPY / CLEAR ================= */
+      function setEdit(r) {
+        editingId = r ? r.id : null;
+        $("saveBtn").textContent = r ? "💾 Update receipt" : "💾 Save receipt";
+        $("cancelEditBtn").classList.toggle("hidden", !r);
+        if (r) {
+          $("editBanner").innerHTML = "Editing receipt <b>" + esc(r.receipt_no) +
+            "</b>. Saving updates the same receipt number. <button id='ebClose'>Cancel</button>";
+          $("editBanner").classList.remove("hidden");
+          $("ebClose").onclick = clearForm;
+        } else {
+          $("editBanner").classList.add("hidden");
+        }
+      }
+
+      function clearForm() {
+        setEdit(null);
+        ["tenantName", "tenantMobile", "flat", "transId"].forEach(function (id) { $(id).value = ""; });
+        $("date").value = today();
+        $("rentMonth").value = monthNow();
+        $("receiptNo").value = nextNo();
+        ["prevDue", "advAdj", "other"].forEach(function (id) { $(id).value = 0; });
+        $("rent").value = 14000;
+        $("water").value = 600;
+        $("gas").value = 1080;
+        $("elec").value = 1850;
+        $("paidToday").value = 17530;
+        $("payMethod").value = "Cash";
+        $("saveMsg").classList.add("hidden");
+        sync();
+      }
+
+      function loadR(id, edit) {
+        var r = records.find(function (x) { return x.id === id; });
+        if (!r) return;
+        if (edit) {
+          setEdit(r);
+          $("receiptNo").value = r.receipt_no;
+        } else {
+          setEdit(null);
+          $("receiptNo").value = nextNo();
+        }
+        $("date").value = today();
+        $("tenantName").value = r.tenant_name;
+        $("tenantMobile").value = r.mobile || "";
+        $("flat").value = r.flat;
+        $("rentMonth").value = edit ? r.month : nextMonth(r.month);
+        $("rent").value = r.rent;
+        $("prevDue").value = edit ? r.previous_due : (Number(r.due) > 0 ? r.due : 0);
+        $("water").value = r.water;
+        $("gas").value = r.gas;
+        $("elec").value = r.electricity;
+        $("other").value = r.other;
+        $("advAdj").value = edit ? r.advance : 0;
+        var est = Number(r.rent) + (edit ? Number(r.previous_due) : (Number(r.due) > 0 ? Number(r.due) : 0)) +
+                  Number(r.water) + Number(r.gas) + Number(r.electricity) + Number(r.other) - (edit ? Number(r.advance) : 0);
+        $("paidToday").value = Math.max(0, est);
+        $("payMethod").value = r.method || "Cash";
+        $("transId").value = edit ? (r.transaction || "") : "";
+        sync();
+        showTab("newPanel");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (!edit) {
+          note("saveMsg", "Copied <b>" + esc(r.tenant_name) + "</b> with carried-over due of <b>" + cash(r.due) +
+            "</b>. Saving creates a new receipt.", "info");
+        } else {
+          $("saveMsg").classList.add("hidden");
+        }
+      }
+
+      function nextMonth(m) {
+        var p = String(m).split("-");
+        var y = Number(p[0]), mo = Number(p[1]) + 1;
+        if (mo > 12) { mo = 1; y += 1; }
+        return y + "-" + String(mo).padStart(2, "0");
+      }
+
+      /* ================= WHATSAPP ================= */
+      function waSend(r) {
+        var emoji = r.status === "PAID" ? "✅" : r.status === "PARTIALLY PAID" ? "⚠️" : "❌";
+        var msg = "*" + settings.property_name + " — বাড়ি ভাড়া রসিদ (Rent Receipt)*\n" +
+          "রসিদ নং / Receipt No: " + r.receipt_no + "\n" +
+          "ভাড়াটিয়া / Tenant: " + r.tenant_name + " (" + r.flat + ")\n" +
+          "মাস / Month: " + r.month + "\n" +
+          "--------------------------------\n" +
+          "মোট প্রদেয় / Total: " + cash(r.total) + "\n" +
+          "পরিশোধিত / Paid: " + cash(r.paid) + " (" + r.method + ")\n" +
+          "বকেয়া / Due: " + cash(r.due) + "\n" +
+          "অবস্থা / Status: " + emoji + " " + r.status + "\n" +
+          "--------------------------------\n" +
+          "ধন্যবাদ / Thank you,\n" + settings.landlord_name + " (" + settings.landlord_mobile + ")\nRentDesk Local";
+        var ph = String(r.mobile || "").replace(/[^0-9]/g, "");
+        var url = "https://api.whatsapp.com/send?" +
+          (ph ? "phone=" + (ph.indexOf("88") === 0 ? ph : "88" + ph) + "&" : "") +
+          "text=" + encodeURIComponent(msg);
+        window.open(url, "_blank");
+      }
+
+      /* ================= CSV EXPORT ================= */
+      function exportCSV(list) {
+        var heads = ["Receipt No","Date","Tenant","Mobile","Flat","Month","Rent","Prev Due","Water","Gas",
+                     "Electricity","Other","Advance","Total","Paid","Due","Method","TrxID","Status"];
+        var rows = list.map(function (r) {
+          return [r.receipt_no, r.date, r.tenant_name, r.mobile, r.flat, r.month, r.rent, r.previous_due,
+                  r.water, r.gas, r.electricity, r.other, r.advance, r.total, r.paid, r.due,
+                  r.method, r.transaction, r.status]
+            .map(function (c) { return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"'; }).join(",");
+        });
+        var blob = new Blob(["\uFEFF" + [heads.join(","), rows.join("\n")].join("\n")],
+          { type: "text/csv;charset=utf-8;" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "rentdesk-receipts-" + today() + ".csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      /* ================= SETTINGS ================= */
+      function fillSettings() {
+        $("propertyName").value = settings.property_name || "";
+        $("propertyAddress").value = settings.property_address || "";
+        $("landlordName").value = settings.landlord_name || "";
+        $("landlordMobile").value = settings.landlord_mobile || "";
+      }
+
+      /* ================= EVENTS ================= */
+      function showTab(id) {
+        document.querySelectorAll("[data-tab]").forEach(function (b) {
+          b.classList.toggle("active", b.dataset.tab === id);
+        });
+        ["newPanel", "recordsPanel", "tenantsPanel", "settingsPanel"].forEach(function (p) {
+          $(p).classList.toggle("hidden", p !== id);
+        });
+        if (id === "recordsPanel" || id === "tenantsPanel") { render(); pull(); }
+      }
+
+      document.querySelectorAll("[data-tab]").forEach(function (b) {
+        b.onclick = function () { showTab(b.dataset.tab); };
+      });
+
+      ["rent","prevDue","water","gas","elec","other","advAdj","paidToday","receiptNo","date",
+       "tenantName","tenantMobile","flat","rentMonth","payMethod","transId"].forEach(function (id) {
+        $(id).addEventListener("input", sync);
+        $(id).addEventListener("change", sync);
+      });
+
+      $("saveBtn").onclick = save;
+      $("printBtn").onclick = $("printBtn2").onclick = function () { window.print(); };
+      $("clearBtn").onclick = clearForm;
+      $("cancelEditBtn").onclick = clearForm;
+      $("dupCopy").onchange = applyMode;
+      $("printMode").onchange = function () { posMode = this.value; applyMode(); };
+      $("posFont").onchange = function () { posFontVal = this.value; applyMode(); };
+      $("posCopies").onchange = function () { posCopiesVal = Number(this.value); syncPos(); };
+      $("posBangla").onchange = function () { posBanglaVal = this.checked; syncPos(); };
+      $("posCompact").onchange = function () { posCompactVal = this.checked; syncPos(); };
+      $("posMonospace").onchange = applyMode;
+      $("waBtn").onclick = function () {
+        waSend(buildReceipt());
+      };
+      $("syncBtn").onclick = function () {
+        this.disabled = true;
+        status_("Syncing…");
+        pull();
+      };
+      $("filterMonth").oninput = render;
+      $("filterSearch").oninput = render;
+      $("filterStatus").onchange = render;
+      $("csvBtn").onclick = function () {
+        var l = filtered();
+        if (!l.length) { alert("No receipts to export."); return; }
+        exportCSV(l);
+      };
+      $("quickTenant").onchange = function () {
+        if (this.value) loadR(this.value, false);
+        this.value = "";
+      };
+
+      $("recordsBody").onclick = function (e) {
+        var t = e.target.closest("button");
+        if (!t) return;
+        if (t.dataset.edit || t.dataset.load) loadR(t.dataset.edit || t.dataset.load, !!t.dataset.edit);
+        if (t.dataset.wa) {
+          var wr = records.find(function (x) { return x.id === t.dataset.wa; });
+          if (wr) waSend(wr);
+        }
+        if (t.dataset.del) {
+          var dr = records.find(function (x) { return x.id === t.dataset.del; });
+          if (!dr) return;
+          if (!confirm("Permanently delete receipt " + dr.receipt_no + " (" + dr.tenant_name + ")?")) return;
+          if (editingId === dr.id) setEdit(null);
+          records = records.filter(function (x) { return x.id !== dr.id; });
+          persist();
+          render();
+          remote("receipts/" + dr.id, "DELETE").then(function (ok) { if (!ok) pull(); });
+        }
+      };
+
+      $("tenantCards").onclick = function (e) {
+        var t = e.target.closest("button");
+        if (!t) return;
+        var r = records.find(function (x) { return x.id === (t.dataset.load || t.dataset.wa); });
+        if (!r) return;
+        if (t.dataset.load) loadR(r.id, false);
+        else waSend(r);
+      };
+
+      $("saveSettingsBtn").onclick = async function () {
+        settings = {
+          property_name: v("propertyName") || "Property",
+          property_address: v("propertyAddress"),
+          landlord_name: v("landlordName"),
+          landlord_mobile: v("landlordMobile")
+        };
+        persist();
+        sync();
+        note("settingsMsg", "Property details saved on this device.", "success");
+        await remote("settings", "PUT", settings);
+      };
+
+      $("exportBtn").onclick = function () {
+        var blob = new Blob([JSON.stringify({
+          app: "RentDesk Local", version: 1, exported_at: new Date().toISOString(),
+          records: records, settings: settings
+        }, null, 2)], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "rentdesk-backup-" + today() + ".json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+
+      $("importBtn").onclick = function () { $("importFile").click(); };
+      $("importFile").onchange = async function (e) {
+        try {
+          var d = JSON.parse(await e.target.files[0].text());
+          if (!Array.isArray(d.records) || !d.settings) throw new Error("Invalid backup file");
+          if (!confirm("Import " + d.records.length + " receipts and replace current data? Continue?")) return;
+          records = d.records;
+          settings = Object.assign({}, DEFAULTS, d.settings);
+          persist();
+          fillSettings();
+          render();
+          sync();
+          note("saveMsg", "Backup imported: " + records.length + " receipts restored.", "success");
+          await remote("import", "POST", { records: records, settings: settings });
+          pull();
+        } catch (err) {
+          alert("Import failed: " + err.message);
+        }
+        e.target.value = "";
+      };
+
+      /* ================= INIT ================= */
+      $("date").value = today();
+      $("rentMonth").value = monthNow();
+      $("filterMonth").value = monthNow();
+      $("receiptNo").value = nextNo();
+      records = read(RK, []);
+      settings = Object.assign({}, DEFAULTS, read(SK, {}));
+      fillSettings();
+      sync();
+      render();
+      applyMode();
+      pull();
+      $("dlSelf").href = location.pathname.split("/").pop() || "rentdesk-local.html";
+
+      document.addEventListener("visibilitychange", function () { if (!document.hidden) pull(); });
+      setInterval(function () { if (!document.hidden) pull(); }, 30000);
+    </script>
+  <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"cfb6543e268d4ceb92c8170675caa481","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
